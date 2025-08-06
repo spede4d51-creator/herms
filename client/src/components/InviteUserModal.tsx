@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Mail, UserPlus, Copy, Check, Send } from 'lucide-react';
-import { db } from '../lib/database';
+import { apiClient } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface InviteUserModalProps {
@@ -35,40 +35,19 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
 
     setLoading(true);
     try {
-      // Создаем приглашение
-      const invitation = db.createProjectInvitation({
-        project_id: project.id,
-        inviter_id: user.id,
-        invitee_email: formData.email.trim(),
-        role: formData.role as 'member' | 'observer',
-        status: 'pending',
-        message: formData.message
-      }, user.id);
-
-      // Генерируем ссылку приглашения
-      const link = `${window.location.origin}/invite/${invitation.id}`;
-      setInviteLink(link);
+      // TODO: Implement invitation API
+      console.log('Creating invitation for:', formData.email);
+      alert(`Invitation would be sent to ${formData.email}!`);
       
-      // Симулируем отправку уведомления в Telegram
-      const settings = db.getUserSettings(user.id);
-      if (settings?.telegram.connected) {
-        console.log(`Отправка в Telegram @${settings.telegram.username}:`, {
-          message: `Вы пригласили ${formData.email} в проект "${project.title}"`,
-          link
-        });
-      }
-
-      alert(`Приглашение отправлено на ${formData.email}!`);
-      
-      // Сброс формы
+      // Reset form
       setFormData({
         email: '',
         role: 'member',
-        message: 'Приглашаю вас присоединиться к нашему проекту!'
+        message: 'Join our project!'
       });
     } catch (error) {
       console.error('Error creating invitation:', error);
-      alert('Ошибка при создании приглашения');
+      alert('Error creating invitation');
     } finally {
       setLoading(false);
     }

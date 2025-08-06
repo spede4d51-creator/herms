@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Bell, Palette, Database, Shield, Save, Building, Phone, MapPin, Mail, MessageCircle, Link } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../lib/database';
+import { apiClient } from '../lib/api';
 
 interface SettingsModalProps {
   isOpen: boolean;

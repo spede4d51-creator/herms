@@ -1,368 +1,163 @@
 import { useState, useEffect } from 'react';
-import { supabase, Task } from '../lib/supabase';
-import { useAuth } from './useAuth';
+import { apiClient } from '../lib/api';
+import { Task, TaskComment } from '@shared/schema';
 
-interface BoardColumn {
+interface Column {
   id: string;
   title: string;
-  status: 'todo' | 'inprogress' | 'inprogress2' | 'done';
-  tasks: TaskWithDetails[];
+  tasks: Task[];
 }
 
 interface Board {
-  id: string;
-  title: string;
-  columns: BoardColumn[];
-}
-
-interface TaskWithDetails extends Task {
-  createdAt: Date;
-  updatedAt: Date;
-  dueDate?: Date;
-  assignee?: string;
+  columns: Column[];
 }
 
 export const useBoard = (projectId?: string) => {
-  const { user, profile } = useAuth();
   const [board, setBoard] = useState<Board>({
-    id: projectId || 'default',
-    title: 'Доска задач',
     columns: [
-      { id: 'todo', title: 'К выполнению', status: 'todo', tasks: [] },
-      { id: 'inprogress', title: 'В работе', status: 'inprogress', tasks: [] },
-      { id: 'inprogress2', title: 'В работе 2', status: 'inprogress2', tasks: [] },
-      { id: 'done', title: 'Выполнено', status: 'done', tasks: [] }
+      { id: 'todo', title: 'To Do', tasks: [] },
+      { id: 'inprogress', title: 'In Progress', tasks: [] },
+      { id: 'inprogress2', title: 'Review', tasks: [] },
+      { id: 'done', title: 'Done', tasks: [] }
     ]
   });
-  
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && projectId) {
-      loadTasks();
-    }
-  }, [user, projectId]);
-
   const loadTasks = async () => {
-    if (!user || !projectId) return;
+    if (!projectId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
-
-      const { data: tasks, error: tasksError } = await supabase
-        .from('tasks')
-        .select(`
-          *,
-          assignee:profiles!tasks_assignee_id_fkey (
-            full_name
-          )
-        `)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-
-      if (tasksError) throw tasksError;
-
-      const tasksWithDates: TaskWithDetails[] = (tasks || []).map(task => ({
-        ...task,
-        createdAt: new Date(task.created_at),
-        updatedAt: new Date(task.updated_at),
-        dueDate: task.due_date ? new Date(task.due_date) : undefined,
-        assignee: task.assignee?.full_name || undefined
-      }));
+      const tasks = await apiClient.getTasks(projectId);
+      
+      // Group tasks by status
+      const tasksByStatus = tasks.reduce((acc, task) => {
+        if (!acc[task.status]) {
+          acc[task.status] = [];
+        }
+        acc[task.status].push(task);
+        return acc;
+      }, {} as Record<string, Task[]>);
 
       setBoard(prev => ({
-        ...prev,
         columns: prev.columns.map(column => ({
           ...column,
-          tasks: tasksWithDates.filter(task => task.status === column.status)
+          tasks: tasksByStatus[column.id] || []
         }))
       }));
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading tasks:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err.message || 'Failed to load tasks');
     } finally {
       setLoading(false);
     }
   };
 
-  const moveTask = async (taskId: string, destinationColumnId: string, destinationIndex: number) => {
-    if (!user) return;
+  useEffect(() => {
+    loadTasks();
+  }, [projectId]);
 
-    // Find the task in current board state
-    let sourceTask: TaskWithDetails | undefined;
-    let sourceColumnIndex = -1;
-
-    for (let i = 0; i < board.columns.length; i++) {
-      const taskIndex = board.columns[i].tasks.findIndex(t => t.id === taskId);
-      if (taskIndex !== -1) {
-        sourceTask = board.columns[i].tasks[taskIndex];
-        sourceColumnIndex = i;
-        break;
-      }
-    }
-
-    if (!sourceTask) return;
-
-    // Determine new status based on destination column
-    let newStatus: Task['status'];
-    if (destinationColumnId.includes('todo')) newStatus = 'todo';
-    else if (destinationColumnId.includes('inprogress2')) newStatus = 'inprogress2';
-    else if (destinationColumnId.includes('inprogress')) newStatus = 'inprogress';
-    else if (destinationColumnId.includes('done')) newStatus = 'done';
-    else newStatus = 'todo';
-
-    // Create updated task
-    const updatedTask = { ...sourceTask, status: newStatus };
-
-    // Optimistically update the board state
-    setBoard(prevBoard => {
-      const newColumns = [...prevBoard.columns];
-      
-      // Remove task from source column
-      if (sourceColumnIndex !== -1) {
-        newColumns[sourceColumnIndex] = {
-          ...newColumns[sourceColumnIndex],
-          tasks: newColumns[sourceColumnIndex].tasks.filter(t => t.id !== taskId)
-        };
-      }
-      
-      // Find destination column and add task
-      const destinationColumnIndex = newColumns.findIndex(col => 
-        destinationColumnId.includes(col.id) || destinationColumnId.endsWith(col.id)
-      );
-      
-      if (destinationColumnIndex !== -1) {
-        const destinationTasks = [...newColumns[destinationColumnIndex].tasks];
-        destinationTasks.splice(destinationIndex, 0, updatedTask);
-        
-        newColumns[destinationColumnIndex] = {
-          ...newColumns[destinationColumnIndex],
-          tasks: destinationTasks
-        };
-      }
-      
-      return {
-        ...prevBoard,
-        columns: newColumns
-      };
-    });
-
-    // Update in database
+  const moveTask = async (taskId: string, newStatus: string) => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', taskId);
-
-      if (error) throw error;
-    } catch (err) {
-      console.error('Error updating task status:', err);
-      // Revert optimistic update
-      await loadTasks();
+      setError(null);
+      const updatedTask = await apiClient.updateTask(taskId, { status: newStatus });
+      
+      setBoard(prev => ({
+        columns: prev.columns.map(column => ({
+          ...column,
+          tasks: column.id === newStatus 
+            ? [...column.tasks.filter(t => t.id !== taskId), updatedTask]
+            : column.tasks.filter(t => t.id !== taskId)
+        }))
+      }));
+    } catch (err: any) {
+      setError(err.message || 'Failed to move task');
+      throw err;
     }
   };
 
-  const addTask = async (task: Omit<TaskWithDetails, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!user || !projectId) return;
+  const addTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'projectId' | 'createdBy'>) => {
+    if (!projectId) return;
 
     try {
-      // Check for assignee if provided
-      let assigneeId = null;
-      if (task.assignee) {
-        const { data: assigneeProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('full_name', task.assignee)
-          .single();
-        
-        assigneeId = assigneeProfile?.id || null;
-      }
-
-      const { data: newTask, error } = await supabase
-        .from('tasks')
-        .insert({
-          title: task.title,
-          description: task.description,
-          status: task.status,
-          priority: task.priority,
-          category: task.category,
-          project_id: projectId,
-          assignee_id: assigneeId,
-          created_by: user.id,
-          due_date: task.dueDate?.toISOString()
-        })
-        .select(`
-          *,
-          assignee:profiles!tasks_assignee_id_fkey (
-            full_name
-          )
-        `)
-        .single();
-
-      if (error) throw error;
-
-      if (newTask) {
-        const taskWithDetails: TaskWithDetails = {
-          ...newTask,
-          createdAt: new Date(newTask.created_at),
-          updatedAt: new Date(newTask.updated_at),
-          dueDate: newTask.due_date ? new Date(newTask.due_date) : undefined,
-          assignee: newTask.assignee?.full_name || undefined
-        };
-
-        // Add to board state
-        setBoard(prev => ({
-          ...prev,
-          columns: prev.columns.map(column => 
-            column.status === task.status 
-              ? { ...column, tasks: [taskWithDetails, ...column.tasks] }
-              : column
-          )
-        }));
-      }
-    } catch (err) {
-      console.error('Error creating task:', err);
-      setError(err instanceof Error ? err.message : 'Error creating task');
+      setError(null);
+      const newTask = await apiClient.createTask(projectId, taskData);
+      
+      setBoard(prev => ({
+        columns: prev.columns.map(column => 
+          column.id === newTask.status 
+            ? { ...column, tasks: [...column.tasks, newTask] }
+            : column
+        )
+      }));
+      
+      return newTask;
+    } catch (err: any) {
+      setError(err.message || 'Failed to create task');
+      throw err;
     }
   };
 
-  const updateTask = async (taskId: string, updates: Partial<TaskWithDetails>) => {
-    if (!user) return;
-
+  const updateTask = async (taskId: string, taskData: Partial<Task>) => {
     try {
-      let assigneeId = undefined;
-      if (updates.assignee !== undefined) {
-        if (updates.assignee) {
-          const { data: assigneeProfile } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('full_name', updates.assignee)
-            .single();
-          
-          assigneeId = assigneeProfile?.id || null;
-        } else {
-          assigneeId = null;
-        }
-      }
-
-      const dbUpdates: any = {};
-      if (updates.title !== undefined) dbUpdates.title = updates.title;
-      if (updates.description !== undefined) dbUpdates.description = updates.description;
-      if (updates.status !== undefined) dbUpdates.status = updates.status;
-      if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
-      if (updates.category !== undefined) dbUpdates.category = updates.category;
-      if (assigneeId !== undefined) dbUpdates.assignee_id = assigneeId;
-      if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate?.toISOString() || null;
-
-      const { data: updatedTask, error } = await supabase
-        .from('tasks')
-        .update(dbUpdates)
-        .eq('id', taskId)
-        .select(`
-          *,
-          assignee:profiles!tasks_assignee_id_fkey (
-            full_name
+      setError(null);
+      const updatedTask = await apiClient.updateTask(taskId, taskData);
+      
+      setBoard(prev => ({
+        columns: prev.columns.map(column => ({
+          ...column,
+          tasks: column.tasks.map(task => 
+            task.id === taskId ? updatedTask : task
           )
-        `)
-        .single();
-
-      if (error) throw error;
-
-      if (updatedTask) {
-        const taskWithDetails: TaskWithDetails = {
-          ...updatedTask,
-          createdAt: new Date(updatedTask.created_at),
-          updatedAt: new Date(updatedTask.updated_at),
-          dueDate: updatedTask.due_date ? new Date(updatedTask.due_date) : undefined,
-          assignee: updatedTask.assignee?.full_name || undefined
-        };
-
-        // Update board state
-        setBoard(prev => ({
-          ...prev,
-          columns: prev.columns.map(column => ({
-            ...column,
-            tasks: column.tasks.map(task => 
-              task.id === taskId ? taskWithDetails : task
-            )
-          }))
-        }));
-      }
-    } catch (err) {
-      console.error('Error updating task:', err);
-      setError(err instanceof Error ? err.message : 'Error updating task');
+        }))
+      }));
+      
+      return updatedTask;
+    } catch (err: any) {
+      setError(err.message || 'Failed to update task');
+      throw err;
     }
   };
 
   const deleteTask = async (taskId: string) => {
-    if (!user) return;
-
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
-
-      if (error) throw error;
-
-      // Remove from board state
+      setError(null);
+      await apiClient.deleteTask(taskId);
+      
       setBoard(prev => ({
-        ...prev,
         columns: prev.columns.map(column => ({
           ...column,
           tasks: column.tasks.filter(task => task.id !== taskId)
         }))
       }));
-    } catch (err) {
-      console.error('Error deleting task:', err);
-      setError(err instanceof Error ? err.message : 'Error deleting task');
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete task');
+      throw err;
     }
   };
 
   const addComment = async (taskId: string, content: string) => {
-    if (!user) return;
-
     try {
-      const { data: comment, error } = await supabase
-        .from('task_comments')
-        .insert({
-          task_id: taskId,
-          user_id: user.id,
-          content
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      setError(null);
+      const comment = await apiClient.createTaskComment(taskId, { content });
       return comment;
-    } catch (err) {
-      console.error('Error adding comment:', err);
-      return null;
+    } catch (err: any) {
+      setError(err.message || 'Failed to add comment');
+      throw err;
     }
   };
 
-  const getTaskComments = async (taskId: string) => {
+  const getTaskComments = async (taskId: string): Promise<TaskComment[]> => {
     try {
-      const { data: comments, error } = await supabase
-        .from('task_comments')
-        .select(`
-          *,
-          profile:profiles (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('task_id', taskId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      return comments || [];
-    } catch (err) {
-      console.error('Error getting task comments:', err);
+      setError(null);
+      return await apiClient.getTaskComments(taskId);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load comments');
       return [];
     }
   };

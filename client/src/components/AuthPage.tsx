@@ -20,19 +20,10 @@ export const AuthPage: React.FC = () => {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      // Здесь будет интеграция с Google OAuth
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      
-      if (error) {
-        setErrors({ general: error.message });
-      }
+      // Google OAuth not implemented yet
+      setErrors({ general: 'Google authentication not yet implemented' });
     } catch (error) {
-      setErrors({ general: 'Ошибка входа через Google' });
+      setErrors({ general: 'Error with Google authentication' });
     } finally {
       setLoading(false);
     }
@@ -95,17 +86,9 @@ export const AuthPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(formData.email, formData.password);
-        if (error) {
-          setErrors({ general: error.message });
-        }
+        await signIn(formData.email, formData.password);
       } else {
-        const { error } = await signUp(formData.email, formData.password, formData.fullName);
-        if (error) {
-          setErrors({ general: error.message });
-        } else {
-          setErrors({ general: 'Регистрация успешна! Проверьте email для подтверждения аккаунта.' });
-        }
+        await signUp(formData.email, formData.password, formData.fullName);
       }
     } catch (error) {
       setErrors({ general: 'Произошла ошибка. Попробуйте снова.' });

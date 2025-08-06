@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, Check, X, Mail, Calendar, User } from 'lucide-react';
-import { db } from '../lib/database';
+import { apiClient } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 
 interface InvitationsPanelProps {
@@ -25,13 +25,8 @@ export const InvitationsPanel: React.FC<InvitationsPanelProps> = ({
   const loadInvitations = () => {
     if (!user) return;
 
-    // Загружаем приглашения для текущего пользователя
-    const userInvitations = db.getProjectInvitations(user.id);
-    const pendingInvitations = userInvitations.filter(inv => 
-      inv.invitee_email === user.email && inv.status === 'pending'
-    );
-
-    setInvitations(pendingInvitations);
+    // TODO: Implement invitations API
+    setInvitations([]);
   };
 
   const handleInvitationResponse = async (invitationId: string, response: 'accepted' | 'rejected') => {

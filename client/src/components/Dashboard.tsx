@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { db } from '../lib/database';
+import { apiClient } from '../lib/api';
 import { useAuth } from '../hooks/useAuth';
 import { StatsCard } from './StatsCard';
 import { TaskDetailsModal } from './TaskDetailsModal';

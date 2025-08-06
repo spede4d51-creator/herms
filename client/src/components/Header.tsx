@@ -4,7 +4,7 @@ import { AddTaskModal } from './AddTaskModal';
 import { Task } from '../types/Task';
 import { useAuth } from '../hooks/useAuth';
 import { InvitationsPanel } from './InvitationsPanel';
-import { db } from '../lib/database';
+import { apiClient } from '../lib/api';
 
 interface HeaderProps {
   onAddTask: (task: any) => void;
@@ -29,15 +29,10 @@ export const Header: React.FC<HeaderProps> = ({
   const [showInvitations, setShowInvitations] = useState(false);
   const [invitationsCount, setInvitationsCount] = useState(0);
 
-  // Подсчитываем количество приглашений
+  // Count invitations - placeholder for now
   React.useEffect(() => {
-    if (user) {
-      const invitations = db.getProjectInvitations(user.id);
-      const pendingCount = invitations.filter(inv => 
-        inv.invitee_email === user.email && inv.status === 'pending'
-      ).length;
-      setInvitationsCount(pendingCount);
-    }
+    // TODO: Implement invitation system in API
+    setInvitationsCount(0);
   }, [user]);
 
   // Фильтруем задачи по поисковому запросу
@@ -221,11 +216,11 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
-                      {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                      {profile?.fullName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </span>
                   </div>
                   <span className="hidden sm:inline text-sm font-medium">
-                    {profile?.full_name || user?.email}
+                    {profile?.fullName || user?.email}
                   </span>
                 </button>
                 
@@ -233,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <div className="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                     <div className="p-3 border-b border-gray-200">
                       <p className="text-sm font-medium text-gray-900">
-                        {profile?.full_name || 'Пользователь'}
+                        {profile?.fullName || 'User'}
                       </p>
                       <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
