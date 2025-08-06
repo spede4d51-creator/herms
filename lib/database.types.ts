@@ -9,20 +9,101 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      projects: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          status: 'planning' | 'active' | 'completed' | 'on_hold'
+          priority: 'low' | 'medium' | 'high'
+          start_date: string | null
+          end_date: string | null
+          created_at: string
+          updated_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          status?: 'planning' | 'active' | 'completed' | 'on_hold'
+          priority?: 'low' | 'medium' | 'high'
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          status?: 'planning' | 'active' | 'completed' | 'on_hold'
+          priority?: 'low' | 'medium' | 'high'
+          start_date?: string | null
+          end_date?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+        }
+      }
+      tasks: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          status: 'todo' | 'in_progress' | 'review' | 'done'
+          priority: 'low' | 'medium' | 'high'
+          project_id: string
+          assigned_to: string | null
+          due_date: string | null
+          created_at: string
+          updated_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          status?: 'todo' | 'in_progress' | 'review' | 'done'
+          priority?: 'low' | 'medium' | 'high'
+          project_id: string
+          assigned_to?: string | null
+          due_date?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          status?: 'todo' | 'in_progress' | 'review' | 'done'
+          priority?: 'low' | 'medium' | 'high'
+          project_id?: string
+          assigned_to?: string | null
+          due_date?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+        }
+      }
       users: {
         Row: {
           id: string
           email: string
           full_name: string | null
           avatar_url: string | null
+          role: 'admin' | 'manager' | 'member'
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: string
+          id: string
           email: string
           full_name?: string | null
           avatar_url?: string | null
+          role?: 'admin' | 'manager' | 'member'
           created_at?: string
           updated_at?: string
         }
@@ -31,104 +112,9 @@ export interface Database {
           email?: string
           full_name?: string | null
           avatar_url?: string | null
+          role?: 'admin' | 'manager' | 'member'
           created_at?: string
           updated_at?: string
-        }
-      }
-      projects: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          status: 'active' | 'completed' | 'on_hold' | 'cancelled'
-          created_by: string | null
-          due_date: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          status?: 'active' | 'completed' | 'on_hold' | 'cancelled'
-          created_by?: string | null
-          due_date?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          status?: 'active' | 'completed' | 'on_hold' | 'cancelled'
-          created_by?: string | null
-          due_date?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      tasks: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          status: 'todo' | 'in_progress' | 'completed' | 'cancelled'
-          priority: 'low' | 'medium' | 'high'
-          project_id: string | null
-          assigned_to: string | null
-          created_by: string | null
-          due_date: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          status?: 'todo' | 'in_progress' | 'completed' | 'cancelled'
-          priority?: 'low' | 'medium' | 'high'
-          project_id?: string | null
-          assigned_to?: string | null
-          created_by?: string | null
-          due_date?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          status?: 'todo' | 'in_progress' | 'completed' | 'cancelled'
-          priority?: 'low' | 'medium' | 'high'
-          project_id?: string | null
-          assigned_to?: string | null
-          created_by?: string | null
-          due_date?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      project_members: {
-        Row: {
-          id: string
-          project_id: string | null
-          user_id: string | null
-          role: 'owner' | 'admin' | 'member'
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          project_id?: string | null
-          user_id?: string | null
-          role?: 'owner' | 'admin' | 'member'
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          project_id?: string | null
-          user_id?: string | null
-          role?: 'owner' | 'admin' | 'member'
-          created_at?: string
         }
       }
     }

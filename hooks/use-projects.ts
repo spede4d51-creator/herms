@@ -1,103 +1,95 @@
-"use client";
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Project, CreateProject, UpdateProject } from '@/lib/types';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import { Project, ProjectInsert, ProjectUpdate } from '@/lib/types'
+import { toast } from 'sonner'
 
 export function useProjects() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchProjects()
+  }, [])
 
   const fetchProjects = async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase
         .from('projects')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
 
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      toast.error('Failed to fetch projects');
+      if (error) throw error
+      setProjects(data || [])
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+      toast.error('Failed to fetch projects')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const createProject = async (project: CreateProject) => {
+  const createProject = async (project: Omit<ProjectInsert, 'created_by'>) => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .insert([project])
+        .insert([{ ...project, created_by: 'user-1' }])
         .select()
-        .single();
+        .single()
 
-      if (error) throw error;
-      
-      setProjects(prev => [data, ...prev]);
-      toast.success('Project created successfully');
-      return data;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create project';
-      toast.error(message);
-      throw err;
+      if (error) throw error
+      setProjects(prev => [data, ...prev])
+      toast.success('Project created successfully')
+      return data
+    } catch (error) {
+      console.error('Error creating project:', error)
+      toast.error('Failed to create project')
+      throw error
     }
-  };
+  }
 
-  const updateProject = async (id: string, updates: UpdateProject) => {
+  const updateProject = async (id: string, updates: ProjectUpdate) => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .update(updates)
+        .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
-        .single();
+        .single()
 
-      if (error) throw error;
-      
-      setProjects(prev => prev.map(p => p.id === id ? data : p));
-      toast.success('Project updated successfully');
-      return data;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update project';
-      toast.error(message);
-      throw err;
+      if (error) throw error
+      setProjects(prev => prev.map(p => p.id === id ? data : p))
+      toast.success('Project updated successfully')
+      return data
+    } catch (error) {
+      console.error('Error updating project:', error)
+      toast.error('Failed to update project')
+      throw error
     }
-  };
+  }
 
   const deleteProject = async (id: string) => {
     try {
       const { error } = await supabase
         .from('projects')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
 
-      if (error) throw error;
-      
-      setProjects(prev => prev.filter(p => p.id !== id));
-      toast.success('Project deleted successfully');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete project';
-      toast.error(message);
-      throw err;
+      if (error) throw error
+      setProjects(prev => prev.filter(p => p.id !== id))
+      toast.success('Project deleted successfully')
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      toast.error('Failed to delete project')
+      throw error
     }
-  };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  }
 
   return {
     projects,
     loading,
-    error,
     createProject,
     updateProject,
     deleteProject,
     refetch: fetchProjects
-  };
+  }
 }

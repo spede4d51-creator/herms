@@ -1,71 +1,67 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useProjects } from "@/hooks/use-projects";
-import { useUsers } from "@/hooks/use-users";
-import { CreateProject } from "@/lib/types";
-import { format } from "date-fns";
-import { CalendarIcon } from 'lucide-react';
-import { cn } from "@/lib/utils";
+import { useState } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { CalendarIcon } from 'lucide-react'
+import { format } from 'date-fns'
+import { useProjects } from '@/hooks/use-projects'
+import { ProjectStatus, Priority } from '@/lib/types'
+import { cn } from '@/lib/utils'
 
 interface ProjectDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export function ProjectDialog({ open, onOpenChange }: ProjectDialogProps) {
+  const { createProject } = useProjects()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    status: "active" as const,
-    due_date: undefined as Date | undefined,
-    created_by: ""
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const { createProject } = useProjects();
-  const { users } = useUsers();
+    name: '',
+    description: '',
+    status: 'planning' as ProjectStatus,
+    priority: 'medium' as Priority,
+    start_date: undefined as Date | undefined,
+    end_date: undefined as Date | undefined,
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name.trim()) return;
+    e.preventDefault()
+    setLoading(true)
 
-    setIsSubmitting(true);
     try {
-      const projectData: CreateProject = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || null,
+      await createProject({
+        name: formData.name,
+        description: formData.description || null,
         status: formData.status,
-        due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
-        created_by: formData.created_by || (users[0]?.id || null)
-      };
+        priority: formData.priority,
+        start_date: formData.start_date?.toISOString() || null,
+        end_date: formData.end_date?.toISOString() || null,
+      })
 
-      await createProject(projectData);
-      
       // Reset form
       setFormData({
-        name: "",
-        description: "",
-        status: "active",
-        due_date: undefined,
-        created_by: ""
-      });
-      
-      onOpenChange(false);
+        name: '',
+        description: '',
+        status: 'planning',
+        priority: 'medium',
+        start_date: undefined,
+        end_date: undefined,
+      })
+      onOpenChange(false)
     } catch (error) {
-      console.error('Failed to create project:', error);
+      console.error('Error creating project:', error)
     } finally {
-      setIsSubmitting(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,101 +72,131 @@ export function ProjectDialog({ open, onOpenChange }: ProjectDialogProps) {
             Add a new project to your workspace. Fill in the details below.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Project Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter project name"
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Enter project description"
-                rows={3}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Project Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Enter project name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Enter project description"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "active" | "completed" | "on_hold" | "cancelled") => 
-                  setFormData(prev => ({ ...prev, status: value }))
-                }
+                onValueChange={(value: ProjectStatus) => setFormData(prev => ({ ...prev, status: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="planning">Planning</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="on_hold">On Hold</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="on_hold">On Hold</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="created_by">Project Owner</Label>
+
+            <div className="space-y-2">
+              <Label>Priority</Label>
               <Select
-                value={formData.created_by}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, created_by: value }))}
+                value={formData.priority}
+                onValueChange={(value: Priority) => setFormData(prev => ({ ...prev, priority: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select project owner" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.full_name || user.email}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label>Due Date</Label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Start Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !formData.due_date && "text-muted-foreground"
+                      !formData.start_date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.due_date ? format(formData.due_date, "PPP") : <span>Pick a date</span>}
+                    {formData.start_date ? format(formData.start_date, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={formData.due_date}
-                    onSelect={(date) => setFormData(prev => ({ ...prev, due_date: date }))}
+                    selected={formData.start_date}
+                    onSelect={(date) => setFormData(prev => ({ ...prev, start_date: date }))}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label>End Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.end_date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.end_date ? format(formData.end_date, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={formData.end_date}
+                    onSelect={(date) => setFormData(prev => ({ ...prev, end_date: date }))}
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
+
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || !formData.name.trim()}>
-              {isSubmitting ? "Creating..." : "Create Project"}
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create Project'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
