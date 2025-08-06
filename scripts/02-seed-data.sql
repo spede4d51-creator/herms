@@ -1,47 +1,37 @@
--- Вставка тестовых пользователей
-INSERT INTO users (id, email, name, avatar_url, role) VALUES
-  ('550e8400-e29b-41d4-a716-446655440001', 'admin@herms.com', 'Администратор', '/thoughtful-man.png', 'admin'),
-  ('550e8400-e29b-41d4-a716-446655440002', 'manager@herms.com', 'Менеджер проектов', '/diverse-woman-portrait.png', 'manager'),
-  ('550e8400-e29b-41d4-a716-446655440003', 'developer@herms.com', 'Разработчик', NULL, 'user'),
-  ('550e8400-e29b-41d4-a716-446655440004', 'designer@herms.com', 'Дизайнер', NULL, 'user'),
-  ('550e8400-e29b-41d4-a716-446655440005', 'tester@herms.com', 'Тестировщик', NULL, 'user')
+-- Insert sample users
+INSERT INTO users (id, email, full_name, avatar_url) VALUES
+    ('550e8400-e29b-41d4-a716-446655440001', 'john.doe@example.com', 'John Doe', '/placeholder.svg?height=40&width=40'),
+    ('550e8400-e29b-41d4-a716-446655440002', 'jane.smith@example.com', 'Jane Smith', '/placeholder.svg?height=40&width=40'),
+    ('550e8400-e29b-41d4-a716-446655440003', 'mike.johnson@example.com', 'Mike Johnson', '/placeholder.svg?height=40&width=40'),
+    ('550e8400-e29b-41d4-a716-446655440004', 'sarah.wilson@example.com', 'Sarah Wilson', '/placeholder.svg?height=40&width=40')
 ON CONFLICT (email) DO NOTHING;
 
--- Вставка тестовых проектов
-INSERT INTO projects (id, name, description, status, owner_id, due_date) VALUES
-  ('660e8400-e29b-41d4-a716-446655440001', 'Веб-приложение HERMS', 'Разработка системы управления проектами', 'active', '550e8400-e29b-41d4-a716-446655440001', '2024-12-31'),
-  ('660e8400-e29b-41d4-a716-446655440002', 'Мобильное приложение', 'Создание мобильной версии системы', 'active', '550e8400-e29b-41d4-a716-446655440002', '2024-11-30'),
-  ('660e8400-e29b-41d4-a716-446655440003', 'Система аналитики', 'Внедрение модуля аналитики и отчетности', 'active', '550e8400-e29b-41d4-a716-446655440001', '2024-10-15')
+-- Insert sample projects
+INSERT INTO projects (id, name, description, status, created_by, due_date) VALUES
+    ('660e8400-e29b-41d4-a716-446655440001', 'Website Redesign', 'Complete redesign of the company website with modern UI/UX', 'active', '550e8400-e29b-41d4-a716-446655440001', '2024-03-15'),
+    ('660e8400-e29b-41d4-a716-446655440002', 'Mobile App Development', 'Develop a cross-platform mobile application', 'active', '550e8400-e29b-41d4-a716-446655440002', '2024-04-30'),
+    ('660e8400-e29b-41d4-a716-446655440003', 'Database Migration', 'Migrate legacy database to new cloud infrastructure', 'completed', '550e8400-e29b-41d4-a716-446655440003', '2024-02-28'),
+    ('660e8400-e29b-41d4-a716-446655440004', 'Marketing Campaign', 'Q1 marketing campaign for product launch', 'on_hold', '550e8400-e29b-41d4-a716-446655440004', '2024-03-31')
 ON CONFLICT (id) DO NOTHING;
 
--- Вставка участников проектов
+-- Insert project members
 INSERT INTO project_members (project_id, user_id, role) VALUES
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'owner'),
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', 'member'),
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440004', 'member'),
-  ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440005', 'member'),
-  ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'owner'),
-  ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 'member'),
-  ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440004', 'member'),
-  ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', 'owner'),
-  ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', 'member')
+    ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', 'owner'),
+    ('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', 'member'),
+    ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', 'owner'),
+    ('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', 'member'),
+    ('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', 'owner'),
+    ('660e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', 'owner')
 ON CONFLICT (project_id, user_id) DO NOTHING;
 
--- Вставка тестовых задач
-INSERT INTO tasks (id, title, description, status, priority, project_id, assignee_id, creator_id, due_date) VALUES
-  ('770e8400-e29b-41d4-a716-446655440001', 'Создать дизайн главной страницы', 'Разработать макет главной страницы системы', 'completed', 'high', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440001', '2024-09-15'),
-  ('770e8400-e29b-41d4-a716-446655440002', 'Настроить базу данных', 'Создать схему базы данных и настроить подключение', 'completed', 'high', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', '2024-09-20'),
-  ('770e8400-e29b-41d4-a716-446655440003', 'Реализовать аутентификацию', 'Добавить систему входа и регистрации пользователей', 'in_progress', 'high', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', '2024-10-01'),
-  ('770e8400-e29b-41d4-a716-446655440004', 'Создать API для проектов', 'Разработать REST API для управления проектами', 'in_progress', 'medium', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', '2024-10-05'),
-  ('770e8400-e29b-41d4-a716-446655440005', 'Написать тесты', 'Покрыть основную функциональность автотестами', 'todo', 'medium', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440001', '2024-10-10'),
-  ('770e8400-e29b-41d4-a716-446655440006', 'Дизайн мобильного интерфейса', 'Создать адаптивный дизайн для мобильных устройств', 'todo', 'high', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440002', '2024-10-15'),
-  ('770e8400-e29b-41d4-a716-446655440007', 'Разработка React Native приложения', 'Создать мобильное приложение на React Native', 'todo', 'high', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', '2024-11-01'),
-  ('770e8400-e29b-41d4-a716-446655440008', 'Настройка аналитики', 'Интегрировать систему сбора аналитических данных', 'todo', 'low', '660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440001', '2024-10-20')
-ON CONFLICT (id) DO NOTHING;
-
--- Вставка тестовых документов
-INSERT INTO documents (id, title, content, project_id, author_id) VALUES
-  ('880e8400-e29b-41d4-a716-446655440001', 'Техническое задание', 'Подробное описание требований к системе HERMS...', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001'),
-  ('880e8400-e29b-41d4-a716-446655440002', 'Архитектура системы', 'Описание архитектуры и компонентов системы...', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440003'),
-  ('880e8400-e29b-41d4-a716-446655440003', 'Руководство пользователя', 'Инструкция по использованию мобильного приложения...', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002')
+-- Insert sample tasks
+INSERT INTO tasks (id, title, description, status, priority, project_id, assigned_to, created_by, due_date) VALUES
+    ('770e8400-e29b-41d4-a716-446655440001', 'Design Homepage Mockup', 'Create wireframes and mockups for the new homepage design', 'completed', 'high', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', '2024-02-15'),
+    ('770e8400-e29b-41d4-a716-446655440002', 'Implement Responsive Layout', 'Code the responsive layout for all device sizes', 'in_progress', 'high', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', '2024-02-28'),
+    ('770e8400-e29b-41d4-a716-446655440003', 'Setup Development Environment', 'Configure development environment for mobile app', 'completed', 'medium', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', '2024-01-30'),
+    ('770e8400-e29b-41d4-a716-446655440004', 'Create User Authentication', 'Implement user login and registration system', 'todo', 'high', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', '2024-03-10'),
+    ('770e8400-e29b-41d4-a716-446655440005', 'Data Backup Verification', 'Verify all data has been properly backed up', 'completed', 'high', '660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', '2024-02-20'),
+    ('770e8400-e29b-41d4-a716-446655440006', 'Create Marketing Materials', 'Design brochures and digital assets', 'todo', 'medium', '660e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', '2024-03-15'),
+    ('770e8400-e29b-41d4-a716-446655440007', 'SEO Optimization', 'Optimize website content for search engines', 'todo', 'medium', '660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440001', '2024-03-05'),
+    ('770e8400-e29b-41d4-a716-446655440008', 'API Integration', 'Integrate third-party APIs for mobile app', 'in_progress', 'high', '660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440002', '2024-03-20')
 ON CONFLICT (id) DO NOTHING;
