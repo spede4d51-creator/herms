@@ -1,6 +1,8 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Project, ProjectInsert, ProjectUpdate } from '@/lib/types'
+import type { Project, ProjectInsert, ProjectUpdate } from '@/lib/types'
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -85,6 +87,6 @@ export function useProjects() {
     fetchProjects,
     createProject,
     updateProject,
-    deleteProject,
+    deleteProject
   }
 }

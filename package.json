@@ -92,7 +92,7 @@
     "vite": "latest",
     "ws": "latest",
     "yaml": "latest",
-    "zod": "latest"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^22",

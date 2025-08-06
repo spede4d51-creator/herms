@@ -14,7 +14,7 @@ export interface Database {
           id: string
           name: string
           description: string | null
-          status: 'active' | 'completed' | 'on-hold'
+          status: 'active' | 'completed' | 'on_hold'
           created_at: string
           updated_at: string
           owner_id: string
@@ -23,7 +23,7 @@ export interface Database {
           id?: string
           name: string
           description?: string | null
-          status?: 'active' | 'completed' | 'on-hold'
+          status?: 'active' | 'completed' | 'on_hold'
           created_at?: string
           updated_at?: string
           owner_id: string
@@ -32,7 +32,7 @@ export interface Database {
           id?: string
           name?: string
           description?: string | null
-          status?: 'active' | 'completed' | 'on-hold'
+          status?: 'active' | 'completed' | 'on_hold'
           created_at?: string
           updated_at?: string
           owner_id?: string
@@ -43,7 +43,7 @@ export interface Database {
           id: string
           title: string
           description: string | null
-          status: 'todo' | 'in-progress' | 'completed'
+          status: 'todo' | 'in_progress' | 'done'
           priority: 'low' | 'medium' | 'high'
           project_id: string
           assignee_id: string | null
@@ -55,7 +55,7 @@ export interface Database {
           id?: string
           title: string
           description?: string | null
-          status?: 'todo' | 'in-progress' | 'completed'
+          status?: 'todo' | 'in_progress' | 'done'
           priority?: 'low' | 'medium' | 'high'
           project_id: string
           assignee_id?: string | null
@@ -67,7 +67,7 @@ export interface Database {
           id?: string
           title?: string
           description?: string | null
-          status?: 'todo' | 'in-progress' | 'completed'
+          status?: 'todo' | 'in_progress' | 'done'
           priority?: 'low' | 'medium' | 'high'
           project_id?: string
           assignee_id?: string | null
@@ -86,7 +86,7 @@ export interface Database {
           updated_at: string
         }
         Insert: {
-          id?: string
+          id: string
           email: string
           name: string
           avatar_url?: string | null
@@ -117,3 +117,5 @@ export interface Database {
     }
   }
 }
+
+export type { Database }

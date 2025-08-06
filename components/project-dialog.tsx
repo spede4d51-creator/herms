@@ -4,32 +4,18 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useProjects } from '@/hooks/use-projects'
-import { ProjectInsert } from '@/lib/types'
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   description: z.string().optional(),
-  status: z.enum(['active', 'completed', 'on-hold']).default('active'),
+  status: z.enum(['active', 'completed', 'on_hold']).default('active'),
 })
 
 type ProjectFormData = z.infer<typeof projectSchema>
@@ -37,121 +23,92 @@ type ProjectFormData = z.infer<typeof projectSchema>
 interface ProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  project?: any
 }
 
-export default function ProjectDialog({ open, onOpenChange, project }: ProjectDialogProps) {
+export function ProjectDialog({ open, onOpenChange }: ProjectDialogProps) {
   const [loading, setLoading] = useState(false)
-  const { createProject, updateProject } = useProjects()
-  
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<ProjectFormData>({
+  const { createProject } = useProjects()
+
+  const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: project?.name || '',
-      description: project?.description || '',
-      status: project?.status || 'active',
+      name: '',
+      description: '',
+      status: 'active',
     },
   })
 
   const onSubmit = async (data: ProjectFormData) => {
     try {
       setLoading(true)
-      
-      const projectData: ProjectInsert = {
+      await createProject({
         ...data,
         owner_id: 'temp-user-id', // In a real app, this would come from auth
-      }
-
-      if (project) {
-        await updateProject(project.id, data)
-      } else {
-        await createProject(projectData)
-      }
-      
-      reset()
+      })
+      form.reset()
       onOpenChange(false)
     } catch (error) {
-      console.error('Error saving project:', error)
+      console.error('Error creating project:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleClose = () => {
-    reset()
-    onOpenChange(false)
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {project ? 'Edit Project' : 'Create New Project'}
-          </DialogTitle>
+          <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
-            {project 
-              ? 'Update the project details below.'
-              : 'Fill in the details to create a new project.'
-            }
+            Add a new project to your workspace. Fill in the details below.
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Project Name</Label>
             <Input
               id="name"
-              {...register('name')}
+              {...form.register('name')}
               placeholder="Enter project name"
             />
-            {errors.name && (
-              <p className="text-sm text-red-600">{errors.name.message}</p>
+            {form.formState.errors.name && (
+              <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
             )}
           </div>
-
+          
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              {...register('description')}
+              {...form.register('description')}
               placeholder="Enter project description"
               rows={3}
             />
           </div>
-
+          
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Select
-              value={watch('status')}
-              onValueChange={(value: 'active' | 'completed' | 'on-hold') => 
-                setValue('status', value)
-              }
+              value={form.watch('status')}
+              onValueChange={(value) => form.setValue('status', value as 'active' | 'completed' | 'on_hold')}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="on-hold">On Hold</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="on_hold">On Hold</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
+          
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : project ? 'Update' : 'Create'}
+              {loading ? 'Creating...' : 'Create Project'}
             </Button>
           </DialogFooter>
         </form>

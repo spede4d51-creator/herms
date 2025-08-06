@@ -1,6 +1,8 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Task, TaskInsert, TaskUpdate } from '@/lib/types'
+import type { Task, TaskInsert, TaskUpdate } from '@/lib/types'
 
 export function useTasks(projectId?: string) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -88,6 +90,6 @@ export function useTasks(projectId?: string) {
     fetchTasks,
     createTask,
     updateTask,
-    deleteTask,
+    deleteTask
   }
 }

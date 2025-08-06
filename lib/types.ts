@@ -1,4 +1,4 @@
-import { Database } from './database.types'
+import type { Database } from './database.types'
 
 export type Project = Database['public']['Tables']['projects']['Row']
 export type ProjectInsert = Database['public']['Tables']['projects']['Insert']
