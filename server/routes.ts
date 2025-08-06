@@ -87,7 +87,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: 'Unauthorized' });
       }
       
-      const projects = await storage.getProjects(req.session.userId);
+      const projects = await storage.getProjectsByOwner(req.session.userId);
       res.json(projects);
     } catch (error) {
       res.status(500).json({ error: error.message });
