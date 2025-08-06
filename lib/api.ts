@@ -1,58 +1,86 @@
-import { Project, Task, User } from './types'
+import { Project, Task } from './types'
 
-// Mock API client - replace with real API calls
-export class ApiClient {
-  private baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
-  async getProjects(): Promise<Project[]> {
-    // Mock implementation
-    return []
-  }
+class ApiClient {
+  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    })
 
-  async createProject(project: Omit<Project, 'id' | 'createdAt'>): Promise<Project> {
-    // Mock implementation
-    return {
-      ...project,
-      id: Date.now().toString(),
-      createdAt: new Date()
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`)
     }
+
+    return response.json()
   }
 
-  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
-    // Mock implementation
-    throw new Error('Not implemented')
+  // Projects
+  async getProjects(): Promise<Project[]> {
+    return this.request<Project[]>('/projects')
+  }
+
+  async getProject(id: string): Promise<Project> {
+    return this.request<Project>(`/projects/${id}`)
+  }
+
+  async createProject(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
+    return this.request<Project>('/projects', {
+      method: 'POST',
+      body: JSON.stringify(project),
+    })
+  }
+
+  async updateProject(id: string, project: Partial<Project>): Promise<Project> {
+    return this.request<Project>(`/projects/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(project),
+    })
   }
 
   async deleteProject(id: string): Promise<void> {
-    // Mock implementation
+    return this.request<void>(`/projects/${id}`, {
+      method: 'DELETE',
+    })
   }
 
-  async getTasks(projectId?: string): Promise<Task[]> {
-    // Mock implementation
-    return []
+  // Tasks
+  async getTasks(): Promise<Task[]> {
+    return this.request<Task[]>('/tasks')
   }
 
-  async createTask(task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> {
-    // Mock implementation
-    return {
-      ...task,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    }
+  async getTask(id: string): Promise<Task> {
+    return this.request<Task>(`/tasks/${id}`)
   }
 
-  async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
-    // Mock implementation
-    throw new Error('Not implemented')
+  async createTask(task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> {
+    return this.request<Task>('/tasks', {
+      method: 'POST',
+      body: JSON.stringify(task),
+    })
+  }
+
+  async updateTask(id: string, task: Partial<Task>): Promise<Task> {
+    return this.request<Task>(`/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(task),
+    })
   }
 
   async deleteTask(id: string): Promise<void> {
-    // Mock implementation
+    return this.request<void>(`/tasks/${id}`, {
+      method: 'DELETE',
+    })
   }
 
-  async getUsers(): Promise<User[]> {
-    // Mock implementation
-    return []
+  async getTasksByProject(projectId: string): Promise<Task[]> {
+    return this.request<Task[]>(`/projects/${projectId}/tasks`)
   }
 }
 
