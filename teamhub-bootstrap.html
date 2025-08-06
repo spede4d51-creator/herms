@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamHub - Система управления проектами</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3B82F6;
+            --secondary-color: #10B981;
+            --accent-color: #8B5CF6;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), #1d4ed8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .sidebar-nav {
+            padding: 1rem;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+
+        .nav-link.active {
+            background-color: #dbeafe;
+            color: var(--primary-color);
+            border: 1px solid #bfdbfe;
+        }
+
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        /* Header */
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        /* Project Cards */
+        .project-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .project-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Task Cards */
+        .task-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .priority-high {
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .priority-medium {
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .priority-low {
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        /* Kanban Board */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .kanban-column {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 500px;
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .column-title {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .task-count {
+            background: #e2e8f0;
+            color: #64748b;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-completed {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-paused {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .kanban-board {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .top-header {
+                padding: 1rem;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Team avatars */
+        .avatar-group {
+            display: flex;
+            margin-left: -0.5rem;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid white;
+            margin-left: -0.5rem;
+        }
+
+        .avatar-more {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            border: 2px solid white;
+            margin-left: -0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 56px;
+            height: 56px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Stats cards */
+        .stats-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stats-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 24px;
+        }
+
+        .stats-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="d-flex align-items-center">
+                <div class="brand-logo me-3">H</div>
+                <div>
+                    <h5 class="mb-0 fw-bold">TeamHub</h5>
+                    <small class="text-muted">Гермес</small>
+                </div>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-view="projects">
+                        <i class="bi bi-folder"></i>
+                        Проекты
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="documents">
+                        <i class="bi bi-file-text"></i>
+                        Документы
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="analytics">
+                        <i class="bi bi-bar-chart"></i>
+                        Аналитика
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-view="marketing">
+                        <i class="bi bi-graph-up"></i>
+                        Маркетинг
+                    </a>
+                </li>
+            </ul>
+
+            <hr class="my-4">
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                        <i class="bi bi-gear"></i>
+                        Настройки
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">
+                        <i class="bi bi-question-circle"></i>
+                        Помощь
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="top-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-link p-0 me-3 d-md-none" id="sidebarToggle">
+                        <i class="bi bi-list fs-4"></i>
+                    </button>
+                    <div class="input-group" style="max-width: 400px;">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" placeholder="Поиск задач...">
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Добавить задачу
+                    </button>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-link p-2 position-relative" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell fs-5"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                3
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="dropdown ms-2">
+                        <button class="btn btn-link d-flex align-items-center p-2" data-bs-toggle="dropdown">
+                            <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150" 
+                                 alt="User" class="rounded-circle me-2" width="32" height="32">
+                            <span class="d-none d-sm-inline">Пользователь</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">Профиль</a></li>
+                            <li><a class="dropdown-item" href="#">Настройки</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#">Выйти</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Views -->
+        <main class="p-4">
+            <!-- Projects View -->
+            <div id="projectsView" class="content-view">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="h3 mb-1">Проекты</h2>
+                        <p class="text-muted">Управляйте всеми вашими проектами в одном месте</p>
+                    </div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createProjectModal">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        Создать проект
+                    </button>
+                </div>
+
+                <!-- Project Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" placeholder="Поиск проектов...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2">
+                                    <select class="form-select">
+                                        <option>Все статусы</option>
+                                        <option>Активные</option>
+                                        <option>Завершённые</option>
+                                        <option>Приостановленные</option>
+                                    </select>
+                                    <select class="form-select">
+                                        <option>По активности</option>
+                                        <option>По дате создания</option>
+                                        <option>По алфавиту</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projects Grid -->
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="project-card fade-in">
+                            <div class="d-flex align-items-start justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="project-icon me-3" style="background-color: var(--primary-color);">
+                                        Г
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Система управления проектами Гермес</h5>
+                                        <div class="d-flex gap-2">
+                                            <span class="status-badge status-active">Активный</span>
+                                            <span class="badge bg-light text-dark">Владелец</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-link p-1" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#">Открыть</a></li>
+                                        <li><a class="dropdown-item" href="#">Настройки</a></li>
+                                        <li><a class="dropdown-item text-warning" href="#">Архивировать</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <p class="text-muted small mb-3">
+                                Разработка современной системы управления проектами с Kanban досками
+                            </p>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-sm mb-1">
+                                    <span>Прогресс</span>
+                                    <span>75%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 75%; background-color: var(--primary-color);"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center text-sm text-muted">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <span>18/24</span>
+                                    <i class="bi bi-people ms-3 me-1"></i>
+                                    <span>5</span>
+                                </div>
+                                <div class="avatar-group">
+                                    <img src="https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <img src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <div class="avatar-more">+2</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="project-card fade-in">
+                            <div class="d-flex align-items-start justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="project-icon me-3" style="background-color: var(--secondary-color);">
+                                        М
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Мобильное приложение для доставки</h5>
+                                        <div class="d-flex gap-2">
+                                            <span class="status-badge status-active">Активный</span>
+                                            <span class="badge bg-light text-dark">Участник</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-muted small mb-3">
+                                Разработка iOS и Android приложения для службы доставки еды
+                            </p>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-sm mb-1">
+                                    <span>Прогресс</span>
+                                    <span>62%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 62%; background-color: var(--secondary-color);"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center text-sm text-muted">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <span>20/32</span>
+                                    <i class="bi bi-people ms-3 me-1"></i>
+                                    <span>8</span>
+                                </div>
+                                <div class="avatar-group">
+                                    <img src="https://images.pexels.com/photos/762020/pexels-photo-762020.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <img src="https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <div class="avatar-more">+6</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="project-card fade-in">
+                            <div class="d-flex align-items-start justify-content-between mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="project-icon me-3" style="background-color: var(--accent-color);">
+                                        Р
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">Редизайн корпоративного сайта</h5>
+                                        <div class="d-flex gap-2">
+                                            <span class="status-badge status-completed">Завершён</span>
+                                            <span class="badge bg-light text-dark">Участник</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-muted small mb-3">
+                                Обновление дизайна и функциональности корпоративного веб-сайта
+                            </p>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-sm mb-1">
+                                    <span>Прогресс</span>
+                                    <span>100%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 100%; background-color: var(--accent-color);"></div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center text-sm text-muted">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    <span>16/16</span>
+                                    <i class="bi bi-people ms-3 me-1"></i>
+                                    <span>4</span>
+                                </div>
+                                <div class="avatar-group">
+                                    <img src="https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150" class="avatar" alt="Member">
+                                    <div class="avatar-more">+3</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanban Board View -->
+            <div id="kanbanView" class="content-view d-none">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="h3 mb-1">Доска задач - Гермес</h2>
+                        <div class="d-flex align-items-center gap-3 text-sm text-muted">
+                            <span>Всего задач: 24</span>
+                            <span>•</span>
+                            <span>Выполнено: 18</span>
+                            <span>•</span>
+                            <span>В работе: 4</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-secondary" onclick="showProjectsView()">
+                        <i class="bi bi-arrow-left me-2"></i>
+                        К проектам
+                    </button>
+                </div>
+
+                <div class="kanban-board">
+                    <!-- Todo Column -->
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">📋</span>
+                                <span class="column-title">К выполнению</span>
+                            </div>
+                            <span class="task-count">2</span>
+                        </div>
+
+                        <div class="task-card priority-high">
+                            <h6 class="mb-2">Настройка дизайн-системы</h6>
+                            <p class="text-muted small mb-3">Создать комплексную дизайн-систему с цветами, типографикой и стилями</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-danger">Высокий</span>
+                                    <span class="badge bg-light text-dark">Дизайн</span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar me-1"></i>
+                                    15.02.2024
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="task-card priority-medium">
+                            <h6 class="mb-2">Аутентификация пользователей</h6>
+                            <p class="text-muted small mb-3">Реализовать систему входа и регистрации пользователей</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-warning">Средний</span>
+                                    <span class="badge bg-light text-dark">Бэкенд</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=150" 
+                                         class="rounded-circle me-1" width="20" height="20" alt="Assignee">
+                                    <small class="text-muted">Команда бэкенда</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- In Progress Column -->
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">⚡</span>
+                                <span class="column-title">В работе</span>
+                            </div>
+                            <span class="task-count">4</span>
+                        </div>
+
+                        <div class="task-card priority-high">
+                            <h6 class="mb-2">API управления задачами</h6>
+                            <p class="text-muted small mb-3">Разработать REST API endpoints для CRUD операций</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-danger">Высокий</span>
+                                    <span class="badge bg-light text-dark">Бэкенд</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150" 
+                                         class="rounded-circle me-1" width="20" height="20" alt="Assignee">
+                                    <small class="text-muted">Команда API</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-card priority-medium">
+                            <h6 class="mb-2">Реализация Drag & Drop</h6>
+                            <p class="text-muted small mb-3">Добавить интуитивную функциональность перетаскивания</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-warning">Средний</span>
+                                    <span class="badge bg-light text-dark">Фронтенд</span>
+                                </div>
+                                <small class="text-muted">Команда фронтенда</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Done Column -->
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">✅</span>
+                                <span class="column-title">Выполнено</span>
+                            </div>
+                            <span class="task-count">18</span>
+                        </div>
+
+                        <div class="task-card">
+                            <h6 class="mb-2">Настройка проекта</h6>
+                            <p class="text-muted small mb-3">Инициализировать проект с правильной структурой папок</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-success">Низкий</span>
+                                    <span class="badge bg-light text-dark">Настройка</span>
+                                </div>
+                                <small class="text-muted">Команда DevOps</small>
+                            </div>
+                        </div>
+
+                        <div class="task-card">
+                            <h6 class="mb-2">Анализ требований</h6>
+                            <p class="text-muted small mb-3">Проанализировать и задокументировать все требования проекта</p>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-success">Низкий</span>
+                                    <span class="badge bg-light text-dark">Планирование</span>
+                                </div>
+                                <small class="text-muted">Команда продукта</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics View -->
+            <div id="analyticsView" class="content-view d-none">
+                <div class="mb-4">
+                    <h2 class="h3 mb-1">Аналитика</h2>
+                    <p class="text-muted">Общая аналитика по всем проектам и ключевые показатели</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-4 mb-5">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stats-card">
+                            <div class="stats-icon" style="background-color: var(--primary-color);">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div class="stats-value">24</div>
+                            <div class="stats-label">Всего задач</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stats-card">
+                            <div class="stats-icon" style="background-color: var(--secondary-color);">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="stats-value">18</div>
+                            <div class="stats-label">Выполнено</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stats-card">
+                            <div class="stats-icon" style="background-color: var(--warning-color);">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div class="stats-value">4</div>
+                            <div class="stats-label">В работе</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stats-card">
+                            <div class="stats-icon" style="background-color: var(--danger-color);">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div class="stats-value">2</div>
+                            <div class="stats-label">Просрочено</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Динамика выполнения задач</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="tasksChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Распределение по приоритетам</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="priorityChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents View -->
+            <div id="documentsView" class="content-view d-none">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="h3 mb-1">Документы</h2>
+                        <p class="text-muted">Управление документами по проектам</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary">
+                            <i class="bi bi-gear me-2"></i>
+                            Редактор документов
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createDocumentModal">
+                            <i class="bi bi-plus-lg me-2"></i>
+                            Создать документ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Document Cards -->
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                                            <i class="bi bi-file-text text-primary fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Договор на разработку ПО</h6>
+                                            <span class="badge bg-success">Готов</span>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link p-1" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-eye me-2"></i>Просмотр</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>Редактировать</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="bi bi-download me-2"></i>Скачать</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-3">Договор на разработку системы управления проектами</p>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge" style="background-color: var(--primary-color);">Гермес</span>
+                                    <span class="text-muted small ms-2">• Договор на разработку</span>
+                                </div>
+                                <div class="bg-light rounded p-2 mb-3">
+                                    <small class="fw-medium">Контрагент</small>
+                                    <div class="text-muted small">ООО "ТехноСофт"</div>
+                                    <div class="text-muted small">ИНН: 7701234567</div>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between text-sm text-muted">
+                                    <span><i class="bi bi-person me-1"></i>Александр Похомов</span>
+                                    <span><i class="bi bi-calendar me-1"></i>21.01.2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start justify-content-between mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-warning bg-opacity-10 p-2 rounded me-3">
+                                            <i class="bi bi-file-text text-warning fs-4"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Техническое задание</h6>
+                                            <span class="badge bg-warning">Черновик</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-3">ТЗ на разработку мобильного приложения</p>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge" style="background-color: var(--secondary-color);">Мобильное приложение</span>
+                                    <span class="text-muted small ms-2">• Техническое задание</span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between text-sm text-muted">
+                                    <span><i class="bi bi-person me-1"></i>Артем Богданский</span>
+                                    <span><i class="bi bi-calendar me-1"></i>25.01.2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing View -->
+            <div id="marketingView" class="content-view d-none">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="h3 mb-1">Маркетинг</h2>
+                        <p class="text-muted">Анализ конкурентов, мониторинг публикаций и создание контента</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary">
+                            <i class="bi bi-bar-chart me-2"></i>
+                            Анализ цен
+                        </button>
+                        <button class="btn btn-primary">
+                            <i class="bi bi-robot me-2"></i>
+                            Генерация поста
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Marketing Tabs -->
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-tab="competitors">
+                                    <i class="bi bi-target me-2"></i>Конкуренты
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-tab="publications">
+                                    <i class="bi bi-globe me-2"></i>Публикации
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-tab="posts">
+                                    <i class="bi bi-share me-2"></i>Посты
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <!-- Competitors Tab -->
+                        <div id="competitorsTab" class="tab-content">
+                            <div class="row g-4">
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card border-2">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <img src="https://images.pexels.com/photos/267350/pexels-photo-267350.jpeg?auto=compress&cs=tinysrgb&w=150" 
+                                                         class="rounded me-3" width="48" height="48" alt="TechFlow">
+                                                    <div>
+                                                        <h6 class="mb-1">TechFlow Solutions</h6>
+                                                        <small class="text-muted">SaaS</small>
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-link p-1">
+                                                    <i class="bi bi-gear"></i>
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="text-warning me-2">
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-half"></i>
+                                                </div>
+                                                <small class="text-muted">4.5</small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <small class="text-muted">Сильные стороны:</small>
+                                                <div class="d-flex gap-1 mt-1">
+                                                    <span class="badge bg-success bg-opacity-10 text-success">Быстрая разработка</span>
+                                                    <span class="badge bg-success bg-opacity-10 text-success">Отличная поддержка</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <a href="#" class="text-primary text-decoration-none">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                    Сайт
+                                                </a>
+                                                <small class="text-muted">Обновлено сегодня</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="card border-2">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" 
+                                                         style="width: 48px; height: 48px; color: white; font-weight: bold;">
+                                                        PM
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-1">ProjectMaster</h6>
+                                                        <small class="text-muted">Project Management</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="text-warning me-2">
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star-fill"></i>
+                                                    <i class="bi bi-star"></i>
+                                                </div>
+                                                <small class="text-muted">4.2</small>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <small class="text-muted">Сильные стороны:</small>
+                                                <div class="d-flex gap-1 mt-1">
+                                                    <span class="badge bg-success bg-opacity-10 text-success">Гибкие настройки</span>
+                                                    <span class="badge bg-success bg-opacity-10 text-success">Интеграции</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <a href="#" class="text-primary text-decoration-none">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                    Сайт
+                                                </a>
+                                                <small class="text-muted">Обновлено вчера</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab d-md-none" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+        <i class="bi bi-plus"></i>
+    </button>
+
+    <!-- Modals -->
+    
+    <!-- Add Task Modal -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Создать задачу
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <i class="bi bi-target me-2 text-primary"></i>
+                                Название задачи
+                            </label>
+                            <input type="text" class="form-control" placeholder="Опишите задачу кратко и понятно...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                <i class="bi bi-person me-2 text-primary"></i>
+                                Исполнитель
+                            </label>
+                            <select class="form-select">
+                                <option>Выберите исполнителя</option>
+                                <option>Александр Похомов</option>
+                                <option>Артем Богданский</option>
+                                <option>Lolita</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Детали задачи</label>
+                            <textarea class="form-control" rows="4" placeholder="Подробное описание задачи, требования, критерии выполнения..."></textarea>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">
+                                    <i class="bi bi-calendar me-2 text-primary"></i>
+                                    Срок выполнения
+                                </label>
+                                <input type="datetime-local" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">
+                                    <i class="bi bi-tag me-2 text-primary"></i>
+                                    Категория
+                                </label>
+                                <input type="text" class="form-control" placeholder="Фронтенд, Бэкенд...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">
+                                    <i class="bi bi-exclamation-triangle me-2 text-primary"></i>
+                                    Приоритет
+                                </label>
+                                <select class="form-select">
+                                    <option value="low">Низкий</option>
+                                    <option value="medium" selected>Средний</option>
+                                    <option value="high">Высокий</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Статус задачи</label>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="status" id="status-todo" value="todo" checked>
+                                    <label class="btn btn-outline-secondary w-100" for="status-todo">
+                                        ❄️ Холодильник
+                                    </label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="status" id="status-progress" value="inprogress">
+                                    <label class="btn btn-outline-primary w-100" for="status-progress">
+                                        ⚡ В работе
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="bi bi-plus me-2"></i>
+                        Добавить задачу
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="modal fade" id="createProjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Создать новый проект</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Название проекта *</label>
+                            <input type="text" class="form-control" placeholder="Введите название проекта...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Описание</label>
+                            <textarea class="form-control" rows="3" placeholder="Краткое описание проекта..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Цвет проекта</label>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn p-2 border" style="background-color: #3B82F6; width: 40px; height: 40px;"></button>
+                                <button type="button" class="btn p-2 border" style="background-color: #10B981; width: 40px; height: 40px;"></button>
+                                <button type="button" class="btn p-2 border" style="background-color: #8B5CF6; width: 40px; height: 40px;"></button>
+                                <button type="button" class="btn p-2 border" style="background-color: #F59E0B; width: 40px; height: 40px;"></button>
+                                <button type="button" class="btn p-2 border" style="background-color: #EF4444; width: 40px; height: 40px;"></button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="bi bi-plus me-2"></i>
+                        Создать проект
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Настройки</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="nav flex-column nav-pills">
+                                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#profile-tab">
+                                    <i class="bi bi-person me-2"></i>Профиль
+                                </button>
+                                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#notifications-tab">
+                                    <i class="bi bi-bell me-2"></i>Уведомления
+                                </button>
+                                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#appearance-tab">
+                                    <i class="bi bi-palette me-2"></i>Внешний вид
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="profile-tab">
+                                    <h6 class="mb-3">Информация профиля</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Отображаемое имя</label>
+                                        <input type="text" class="form-control" value="Пользователь">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" value="user@example.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Роль</label>
+                                        <select class="form-select">
+                                            <option>Менеджер проекта</option>
+                                            <option>Разработчик</option>
+                                            <option>Дизайнер</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="notifications-tab">
+                                    <h6 class="mb-3">Настройки уведомлений</h6>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="taskUpdates" checked>
+                                        <label class="form-check-label" for="taskUpdates">
+                                            Обновления задач
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="deadlineReminders" checked>
+                                        <label class="form-check-label" for="deadlineReminders">
+                                            Напоминания о сроках
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="teamActivity">
+                                        <label class="form-check-label" for="teamActivity">
+                                            Активность команды
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="appearance-tab">
+                                    <h6 class="mb-3">Настройки внешнего вида</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Тема</label>
+                                        <select class="form-select">
+                                            <option>Светлая</option>
+                                            <option>Тёмная</option>
+                                            <option>Системная</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Язык</label>
+                                        <select class="form-select">
+                                            <option>Русский</option>
+                                            <option>English</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="bi bi-check me-2"></i>
+                        Сохранить изменения
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navigation functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('[data-view]');
+            const contentViews = document.querySelectorAll('.content-view');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            // Navigation switching
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetView = this.getAttribute('data-view');
+                    
+                    // Update active nav link
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target view
+                    contentViews.forEach(view => view.classList.add('d-none'));
+                    const targetElement = document.getElementById(targetView + 'View');
+                    if (targetElement) {
+                        targetElement.classList.remove('d-none');
+                    }
+                });
+            });
+
+            // Sidebar toggle for mobile
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            // Project card click to show kanban
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    contentViews.forEach(view => view.classList.add('d-none'));
+                    document.getElementById('kanbanView').classList.remove('d-none');
+                });
+            });
+
+            // Marketing tabs
+            document.querySelectorAll('[data-tab]').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show target tab content (simplified for demo)
+                    console.log('Switching to tab:', targetTab);
+                });
+            });
+        });
+
+        // Function to show projects view
+        function showProjectsView() {
+            document.querySelectorAll('.content-view').forEach(view => view.classList.add('d-none'));
+            document.getElementById('projectsView').classList.remove('d-none');
+        }
+
+        // Simulate task drag and drop (simplified)
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskCards = document.querySelectorAll('.task-card');
+            taskCards.forEach(card => {
+                card.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', this.innerHTML);
+                });
+                card.setAttribute('draggable', 'true');
+            });
+        });
+
+        // Auto-hide alerts
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                if (alert.classList.contains('alert-dismissible')) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
