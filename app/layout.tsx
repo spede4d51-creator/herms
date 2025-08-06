@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'HERMS - Project Management',
-  description: 'Human Resource Management System for project tracking and team collaboration',
+  description: 'Human Resource Management System for project and task management',
     generator: 'v0.dev'
 }
 

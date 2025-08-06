@@ -1,56 +1,53 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Task, TaskInsert, TaskUpdate } from '@/lib/types'
-import { toast } from 'sonner'
+import { Task } from '@/lib/types'
 
-export function useTasks(projectId?: string) {
+export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
-  }, [projectId])
+  }, [])
 
-  const fetchTasks = async () => {
+  async function fetchTasks() {
     try {
-      let query = supabase.from('tasks').select('*')
-      
-      if (projectId) {
-        query = query.eq('project_id', projectId)
-      }
-      
-      const { data, error } = await query.order('created_at', { ascending: false })
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (error) throw error
       setTasks(data || [])
-    } catch (error) {
-      console.error('Error fetching tasks:', error)
-      toast.error('Failed to fetch tasks')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
   }
 
-  const createTask = async (task: Omit<TaskInsert, 'created_by'>) => {
+  async function createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([{ ...task, created_by: 'user-1' }])
+        .insert([task])
         .select()
         .single()
 
       if (error) throw error
       setTasks(prev => [data, ...prev])
-      toast.success('Task created successfully')
       return data
-    } catch (error) {
-      console.error('Error creating task:', error)
-      toast.error('Failed to create task')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
-  const updateTask = async (id: string, updates: TaskUpdate) => {
+  async function updateTask(id: string, updates: Partial<Task>) {
     try {
       const { data, error } = await supabase
         .from('tasks')
@@ -61,16 +58,14 @@ export function useTasks(projectId?: string) {
 
       if (error) throw error
       setTasks(prev => prev.map(t => t.id === id ? data : t))
-      toast.success('Task updated successfully')
       return data
-    } catch (error) {
-      console.error('Error updating task:', error)
-      toast.error('Failed to update task')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
-  const deleteTask = async (id: string) => {
+  async function deleteTask(id: string) {
     try {
       const { error } = await supabase
         .from('tasks')
@@ -79,20 +74,19 @@ export function useTasks(projectId?: string) {
 
       if (error) throw error
       setTasks(prev => prev.filter(t => t.id !== id))
-      toast.success('Task deleted successfully')
-    } catch (error) {
-      console.error('Error deleting task:', error)
-      toast.error('Failed to delete task')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
   return {
     tasks,
     loading,
+    error,
+    fetchTasks,
     createTask,
     updateTask,
-    deleteTask,
-    refetch: fetchTasks
+    deleteTask
   }
 }

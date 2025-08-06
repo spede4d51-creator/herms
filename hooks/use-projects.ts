@@ -1,18 +1,21 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Project, ProjectInsert, ProjectUpdate } from '@/lib/types'
-import { toast } from 'sonner'
+import { Project } from '@/lib/types'
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProjects()
   }, [])
 
-  const fetchProjects = async () => {
+  async function fetchProjects() {
     try {
+      setLoading(true)
       const { data, error } = await supabase
         .from('projects')
         .select('*')
@@ -20,34 +23,31 @@ export function useProjects() {
 
       if (error) throw error
       setProjects(data || [])
-    } catch (error) {
-      console.error('Error fetching projects:', error)
-      toast.error('Failed to fetch projects')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
   }
 
-  const createProject = async (project: Omit<ProjectInsert, 'created_by'>) => {
+  async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .insert([{ ...project, created_by: 'user-1' }])
+        .insert([project])
         .select()
         .single()
 
       if (error) throw error
       setProjects(prev => [data, ...prev])
-      toast.success('Project created successfully')
       return data
-    } catch (error) {
-      console.error('Error creating project:', error)
-      toast.error('Failed to create project')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
-  const updateProject = async (id: string, updates: ProjectUpdate) => {
+  async function updateProject(id: string, updates: Partial<Project>) {
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -58,16 +58,14 @@ export function useProjects() {
 
       if (error) throw error
       setProjects(prev => prev.map(p => p.id === id ? data : p))
-      toast.success('Project updated successfully')
       return data
-    } catch (error) {
-      console.error('Error updating project:', error)
-      toast.error('Failed to update project')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
-  const deleteProject = async (id: string) => {
+  async function deleteProject(id: string) {
     try {
       const { error } = await supabase
         .from('projects')
@@ -76,20 +74,19 @@ export function useProjects() {
 
       if (error) throw error
       setProjects(prev => prev.filter(p => p.id !== id))
-      toast.success('Project deleted successfully')
-    } catch (error) {
-      console.error('Error deleting project:', error)
-      toast.error('Failed to delete project')
-      throw error
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      throw err
     }
   }
 
   return {
     projects,
     loading,
+    error,
+    fetchProjects,
     createProject,
     updateProject,
-    deleteProject,
-    refetch: fetchProjects
+    deleteProject
   }
 }

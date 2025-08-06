@@ -15,7 +15,7 @@ import { ProjectDialog } from '@/components/project-dialog'
 import { TaskDialog } from '@/components/task-dialog'
 import { formatDate, getStatusColor, getPriorityColor } from '@/lib/utils'
 
-export function Dashboard() {
+export default function Dashboard() {
   const { projects, loading: projectsLoading } = useProjects()
   const { tasks, loading: tasksLoading } = useTasks()
   const { users, loading: usersLoading } = useUsers()
