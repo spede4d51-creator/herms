@@ -1,63 +1,73 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { CalendarIcon } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { Task, Project } from '@/lib/types'
 
 interface TaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onSubmit: (task: Omit<Task, 'id' | 'createdAt'>) => void
+  projects: Project[]
 }
 
-export function TaskDialog({ open, onOpenChange }: TaskDialogProps) {
+export function TaskDialog({ open, onOpenChange, onSubmit, projects }: TaskDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: '',
-    status: 'pending',
-    project: '',
-    assignee: ''
+    status: 'pending' as const,
+    priority: 'medium' as const,
+    projectId: '',
+    assigneeId: '',
+    dueDate: undefined as Date | undefined
   })
-  const [dueDate, setDueDate] = useState<Date>()
+
+  const selectedProject = projects.find(p => p.id === formData.projectId)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Создание задачи:', { ...formData, dueDate })
-    onOpenChange(false)
-    // Здесь будет логика создания задачи
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    if (formData.title && formData.description && formData.projectId && formData.dueDate) {
+      onSubmit({
+        ...formData,
+        dueDate: formData.dueDate
+      })
+      setFormData({
+        title: '',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+        projectId: '',
+        assigneeId: '',
+        dueDate: undefined
+      })
+      onOpenChange(false)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Создать новую задачу</DialogTitle>
-          <DialogDescription>
-            Заполните информацию о новой задаче. Укажите все необходимые детали.
-          </DialogDescription>
         </DialogHeader>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Название задачи</Label>
             <Input
               id="title"
-              placeholder="Введите название задачи"
               value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Введите название задачи"
               required
             />
           </div>
@@ -66,70 +76,72 @@ export function TaskDialog({ open, onOpenChange }: TaskDialogProps) {
             <Label htmlFor="description">Описание</Label>
             <Textarea
               id="description"
-              placeholder="Опишите детали задачи"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              rows={3}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Опишите детали задачи"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Проект</Label>
-              <Select value={formData.project} onValueChange={(value) => handleInputChange('project', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите проект" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="herms">Веб-приложение HERMS</SelectItem>
-                  <SelectItem value="mobile">Мобильное приложение</SelectItem>
-                  <SelectItem value="docs">API Документация</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Исполнитель</Label>
-              <Select value={formData.assignee} onValueChange={(value) => handleInputChange('assignee', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Назначить исполнителя" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="anna">Анна</SelectItem>
-                  <SelectItem value="mikhail">Михаил</SelectItem>
-                  <SelectItem value="elena">Елена</SelectItem>
-                  <SelectItem value="dmitry">Дмитрий</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Проект</Label>
+            <Select value={formData.projectId} onValueChange={(value) => setFormData({ ...formData, projectId: value, assigneeId: '' })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите проект" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {selectedProject && (
             <div className="space-y-2">
-              <Label>Приоритет</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+              <Label>Исполнитель</Label>
+              <Select value={formData.assigneeId} onValueChange={(value) => setFormData({ ...formData, assigneeId: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите приоритет" />
+                  <SelectValue placeholder="Выберите исполнителя" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Низкий</SelectItem>
-                  <SelectItem value="medium">Средний</SelectItem>
-                  <SelectItem value="high">Высокий</SelectItem>
+                  {selectedProject.teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+          )}
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Статус</Label>
-              <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+              <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">Ожидает</SelectItem>
                   <SelectItem value="in-progress">В работе</SelectItem>
-                  <SelectItem value="completed">Выполнено</SelectItem>
+                  <SelectItem value="completed">Завершена</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Приоритет</Label>
+              <Select value={formData.priority} onValueChange={(value: any) => setFormData({ ...formData, priority: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Низкий</SelectItem>
+                  <SelectItem value="medium">Средний</SelectItem>
+                  <SelectItem value="high">Высокий</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -139,33 +151,30 @@ export function TaskDialog({ open, onOpenChange }: TaskDialogProps) {
             <Label>Срок выполнения</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
+                <Button variant="outline" className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, 'PPP', { locale: ru }) : 'Выберите дату'}
+                  {formData.dueDate ? format(formData.dueDate, 'PPP', { locale: ru }) : 'Выберите дату'}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0">
                 <Calendar
                   mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
+                  selected={formData.dueDate}
+                  onSelect={(date) => setFormData({ ...formData, dueDate: date })}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Отмена
             </Button>
             <Button type="submit">
               Создать задачу
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

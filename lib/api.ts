@@ -1,102 +1,58 @@
-// API клиент для взаимодействия с backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+import { Project, Task, User } from './types'
 
-class ApiClient {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`
-    
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    }
+// Mock API client - replace with real API calls
+export class ApiClient {
+  private baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
 
-    try {
-      const response = await fetch(url, config)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      return await response.json()
-    } catch (error) {
-      console.error('API request failed:', error)
-      throw error
+  async getProjects(): Promise<Project[]> {
+    // Mock implementation
+    return []
+  }
+
+  async createProject(project: Omit<Project, 'id' | 'createdAt'>): Promise<Project> {
+    // Mock implementation
+    return {
+      ...project,
+      id: Date.now().toString(),
+      createdAt: new Date()
     }
   }
 
-  // Проекты
-  async getProjects() {
-    return this.request('/projects')
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+    // Mock implementation
+    throw new Error('Not implemented')
   }
 
-  async createProject(project: any) {
-    return this.request('/projects', {
-      method: 'POST',
-      body: JSON.stringify(project),
-    })
+  async deleteProject(id: string): Promise<void> {
+    // Mock implementation
   }
 
-  async updateProject(id: string, project: any) {
-    return this.request(`/projects/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(project),
-    })
+  async getTasks(projectId?: string): Promise<Task[]> {
+    // Mock implementation
+    return []
   }
 
-  async deleteProject(id: string) {
-    return this.request(`/projects/${id}`, {
-      method: 'DELETE',
-    })
+  async createTask(task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> {
+    // Mock implementation
+    return {
+      ...task,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    }
   }
 
-  // Задачи
-  async getTasks() {
-    return this.request('/tasks')
+  async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
+    // Mock implementation
+    throw new Error('Not implemented')
   }
 
-  async createTask(task: any) {
-    return this.request('/tasks', {
-      method: 'POST',
-      body: JSON.stringify(task),
-    })
+  async deleteTask(id: string): Promise<void> {
+    // Mock implementation
   }
 
-  async updateTask(id: string, task: any) {
-    return this.request(`/tasks/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(task),
-    })
-  }
-
-  async deleteTask(id: string) {
-    return this.request(`/tasks/${id}`, {
-      method: 'DELETE',
-    })
-  }
-
-  // Пользователи
-  async getUsers() {
-    return this.request('/users')
-  }
-
-  async getCurrentUser() {
-    return this.request('/auth/me')
-  }
-
-  async login(credentials: { email: string; password: string }) {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    })
-  }
-
-  async logout() {
-    return this.request('/auth/logout', {
-      method: 'POST',
-    })
+  async getUsers(): Promise<User[]> {
+    // Mock implementation
+    return []
   }
 }
 
