@@ -1,162 +1,224 @@
 'use client'
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useTasks } from '@/hooks/use-tasks'
-import { useProjects } from '@/hooks/use-projects'
+import { useUsers } from '@/hooks/use-users'
+import { TaskInsert } from '@/lib/types'
+
+const taskSchema = z.object({
+  title: z.string().min(1, 'Task title is required'),
+  description: z.string().optional(),
+  status: z.enum(['todo', 'in-progress', 'completed']).default('todo'),
+  priority: z.enum(['low', 'medium', 'high']).default('medium'),
+  assignee_id: z.string().optional(),
+  due_date: z.string().optional(),
+})
+
+type TaskFormData = z.infer<typeof taskSchema>
 
 interface TaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  projectId: string | null
+  task?: any
 }
 
-export function TaskDialog({ open, onOpenChange }: TaskDialogProps) {
-  const { createTask } = useTasks()
-  const { projects } = useProjects()
+export default function TaskDialog({ open, onOpenChange, projectId, task }: TaskDialogProps) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'todo' as const,
-    priority: 'medium' as const,
-    project_id: '',
-    assigned_to: '',
-    due_date: ''
+  const { createTask, updateTask } = useTasks()
+  const { users } = useUsers()
+  
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: task?.title || '',
+      description: task?.description || '',
+      status: task?.status || 'todo',
+      priority: task?.priority || 'medium',
+      assignee_id: task?.assignee_id || '',
+      due_date: task?.due_date ? task.due_date.split('T')[0] : '',
+    },
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
+  const onSubmit = async (data: TaskFormData) => {
+    if (!projectId) return
+    
     try {
-      await createTask({
-        ...formData,
-        assigned_to: formData.assigned_to || null,
-        due_date: formData.due_date || null,
-        created_by: 'user-1' // This would come from auth context
-      })
+      setLoading(true)
       
-      setFormData({
-        title: '',
-        description: '',
-        status: 'todo',
-        priority: 'medium',
-        project_id: '',
-        assigned_to: '',
-        due_date: ''
-      })
+      const taskData: TaskInsert = {
+        ...data,
+        project_id: projectId,
+        assignee_id: data.assignee_id || null,
+        due_date: data.due_date || null,
+      }
+
+      if (task) {
+        await updateTask(task.id, data)
+      } else {
+        await createTask(taskData)
+      }
+      
+      reset()
       onOpenChange(false)
     } catch (error) {
-      console.error('Error creating task:', error)
+      console.error('Error saving task:', error)
     } finally {
       setLoading(false)
     }
   }
 
+  const handleClose = () => {
+    reset()
+    onOpenChange(false)
+  }
+
+  if (!projectId) {
+    return null
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle>
+            {task ? 'Edit Task' : 'Create New Task'}
+          </DialogTitle>
           <DialogDescription>
-            Add a new task to your project. Fill in the details below.
+            {task 
+              ? 'Update the task details below.'
+              : 'Fill in the details to create a new task.'
+            }
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="col-span-3"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="project_id" className="text-right">
-                Project
-              </Label>
-              <Select value={formData.project_id} onValueChange={(value) => setFormData(prev => ({ ...prev, project_id: value }))}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right">
-                Status
-              </Label>
-              <Select value={formData.status} onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Task Title</Label>
+            <Input
+              id="title"
+              {...register('title')}
+              placeholder="Enter task title"
+            />
+            {errors.title && (
+              <p className="text-sm text-red-600">{errors.title.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              {...register('description')}
+              placeholder="Enter task description"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select
+                value={watch('status')}
+                onValueChange={(value: 'todo' | 'in-progress' | 'completed') => 
+                  setValue('status', value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="priority" className="text-right">
-                Priority
-              </Label>
-              <Select value={formData.priority} onValueChange={(value: any) => setFormData(prev => ({ ...prev, priority: value }))}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
+
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Select
+                value={watch('priority')}
+                onValueChange={(value: 'low' | 'medium' | 'high') => 
+                  setValue('priority', value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="due_date" className="text-right">
-                Due Date
-              </Label>
-              <Input
-                id="due_date"
-                type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignee">Assignee</Label>
+            <Select
+              value={watch('assignee_id')}
+              onValueChange={(value) => setValue('assignee_id', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="due_date">Due Date</Label>
+            <Input
+              id="due_date"
+              type="date"
+              {...register('due_date')}
+            />
+          </div>
+
           <DialogFooter>
-            <Button type="submit" disabled={loading || !formData.project_id}>
-              {loading ? 'Creating...' : 'Create Task'}
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : task ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,24 +1,25 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Task } from '@/lib/types'
+import { Task, TaskInsert, TaskUpdate } from '@/lib/types'
 
-export function useTasks() {
+export function useTasks(projectId?: string) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    if (projectId) {
+      fetchTasks(projectId)
+    }
+  }, [projectId])
 
-  async function fetchTasks() {
+  const fetchTasks = async (projectId: string) => {
     try {
       setLoading(true)
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .eq('project_id', projectId)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -30,11 +31,11 @@ export function useTasks() {
     }
   }
 
-  async function createTask(task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) {
+  const createTask = async (task: TaskInsert) => {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .insert([task])
+        .insert(task)
         .select()
         .single()
 
@@ -47,11 +48,11 @@ export function useTasks() {
     }
   }
 
-  async function updateTask(id: string, updates: Partial<Task>) {
+  const updateTask = async (id: string, updates: TaskUpdate) => {
     try {
       const { data, error } = await supabase
         .from('tasks')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -65,7 +66,7 @@ export function useTasks() {
     }
   }
 
-  async function deleteTask(id: string) {
+  const deleteTask = async (id: string) => {
     try {
       const { error } = await supabase
         .from('tasks')
@@ -87,6 +88,6 @@ export function useTasks() {
     fetchTasks,
     createTask,
     updateTask,
-    deleteTask
+    deleteTask,
   }
 }

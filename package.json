@@ -12,7 +12,7 @@
     "@aws-sdk/client-rds-data": "latest",
     "@cloudflare/workers-types": "latest",
     "@electric-sql/pglite": "latest",
-    "@hookform/resolvers": "^3.3.2",
+    "@hookform/resolvers": "latest",
     "@libsql/client": "latest",
     "@libsql/client-wasm": "latest",
     "@neondatabase/serverless": "latest",
@@ -48,7 +48,7 @@
     "chart.js": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "latest",
+    "date-fns": "^2.30.0",
     "drizzle-kit": "latest",
     "drizzle-orm": "latest",
     "drizzle-zod": "latest",
@@ -75,7 +75,7 @@
     "react-chartjs-2": "latest",
     "react-day-picker": "latest",
     "react-dom": "^18",
-    "react-hook-form": "^7.48.2",
+    "react-hook-form": "latest",
     "react-quill": "latest",
     "sass": "latest",
     "sass-embedded": "latest",
@@ -92,17 +92,17 @@
     "vite": "latest",
     "ws": "latest",
     "yaml": "latest",
-    "zod": "^3.22.4"
+    "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "autoprefixer": "^10.4.16",
+    "autoprefixer": "^10.4.20",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
     "postcss": "^8.5",
-    "tailwindcss": "^3.3.6",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
 }

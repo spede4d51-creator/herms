@@ -1,8 +1,6 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Project } from '@/lib/types'
+import { Project, ProjectInsert, ProjectUpdate } from '@/lib/types'
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -13,7 +11,7 @@ export function useProjects() {
     fetchProjects()
   }, [])
 
-  async function fetchProjects() {
+  const fetchProjects = async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -30,11 +28,11 @@ export function useProjects() {
     }
   }
 
-  async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) {
+  const createProject = async (project: ProjectInsert) => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .insert([project])
+        .insert(project)
         .select()
         .single()
 
@@ -47,11 +45,11 @@ export function useProjects() {
     }
   }
 
-  async function updateProject(id: string, updates: Partial<Project>) {
+  const updateProject = async (id: string, updates: ProjectUpdate) => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -65,7 +63,7 @@ export function useProjects() {
     }
   }
 
-  async function deleteProject(id: string) {
+  const deleteProject = async (id: string) => {
     try {
       const { error } = await supabase
         .from('projects')
@@ -87,6 +85,6 @@ export function useProjects() {
     fetchProjects,
     createProject,
     updateProject,
-    deleteProject
+    deleteProject,
   }
 }

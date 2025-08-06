@@ -1,8 +1,6 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { User } from '@/lib/types'
+import { User, UserInsert, UserUpdate } from '@/lib/types'
 
 export function useUsers() {
   const [users, setUsers] = useState<User[]>([])
@@ -13,13 +11,13 @@ export function useUsers() {
     fetchUsers()
   }, [])
 
-  async function fetchUsers() {
+  const fetchUsers = async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('name', { ascending: true })
 
       if (error) throw error
       setUsers(data || [])
@@ -30,16 +28,16 @@ export function useUsers() {
     }
   }
 
-  async function createUser(user: Omit<User, 'created_at' | 'updated_at'>) {
+  const createUser = async (user: UserInsert) => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .insert([user])
+        .insert(user)
         .select()
         .single()
 
       if (error) throw error
-      setUsers(prev => [data, ...prev])
+      setUsers(prev => [...prev, data])
       return data
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -47,11 +45,11 @@ export function useUsers() {
     }
   }
 
-  async function updateUser(id: string, updates: Partial<User>) {
+  const updateUser = async (id: string, updates: UserUpdate) => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
@@ -65,7 +63,7 @@ export function useUsers() {
     }
   }
 
-  async function deleteUser(id: string) {
+  const deleteUser = async (id: string) => {
     try {
       const { error } = await supabase
         .from('users')
@@ -87,6 +85,6 @@ export function useUsers() {
     fetchUsers,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
   }
 }
