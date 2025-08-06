@@ -69,7 +69,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateInput: Date | string) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
