@@ -12,6 +12,7 @@
     "@aws-sdk/client-rds-data": "latest",
     "@cloudflare/workers-types": "latest",
     "@electric-sql/pglite": "latest",
+    "@hookform/resolvers": "^3.3.4",
     "@libsql/client": "latest",
     "@libsql/client-wasm": "latest",
     "@neondatabase/serverless": "latest",
@@ -74,6 +75,7 @@
     "react-chartjs-2": "latest",
     "react-day-picker": "latest",
     "react-dom": "^18",
+    "react-hook-form": "^7.49.3",
     "react-quill": "latest",
     "sass": "latest",
     "sass-embedded": "latest",
@@ -91,15 +93,17 @@
     "vite": "latest",
     "ws": "latest",
     "yaml": "latest",
-    "zod": "latest"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
     "postcss": "^8.5",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^3.3.0",
     "typescript": "^5"
   }
 }

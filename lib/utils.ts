@@ -5,15 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDate(date: string | Date) {
-  return new Intl.DateTimeFormat('en-US', {
+export function formatDate(date: string | null): string {
+  if (!date) return 'No date set'
+  return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-  }).format(new Date(date))
+    day: 'numeric'
+  })
 }
 
-export function getStatusColor(status: string) {
+export function getStatusColor(status: string): string {
   switch (status) {
     case 'planning':
     case 'todo':
@@ -27,13 +28,13 @@ export function getStatusColor(status: string) {
     case 'done':
       return 'bg-green-100 text-green-800'
     case 'on_hold':
-      return 'bg-red-100 text-red-800'
+      return 'bg-orange-100 text-orange-800'
     default:
       return 'bg-gray-100 text-gray-800'
   }
 }
 
-export function getPriorityColor(priority: string) {
+export function getPriorityColor(priority: string): string {
   switch (priority) {
     case 'low':
       return 'bg-green-100 text-green-800'

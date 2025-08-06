@@ -132,3 +132,6 @@ export interface Database {
     }
   }
 }
+
+// Named export for Database
+export type { Database }
