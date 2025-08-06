@@ -48,10 +48,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // Загружаем настройки пользователя
   useEffect(() => {
     if (user) {
-      const userSettings = db.getUserSettings(user.id) || db.createUserSettings(user.id);
-      setNotifications(userSettings.notifications);
-      setAppearance(userSettings.appearance);
-      setTelegram(userSettings.telegram);
+      // TODO: Implement user settings API
+      setNotifications({
+        taskUpdates: true,
+        deadlineReminders: true,
+        teamActivity: false,
+        emailNotifications: true
+      });
+      setAppearance({
+        theme: 'light',
+        language: 'ru',
+        compactView: false
+      });
+      setTelegram({
+        username: '',
+        connected: false
+      });
     }
   }, [user]);
 

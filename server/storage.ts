@@ -348,7 +348,7 @@ export class MemStorage implements IStorage {
   }
 
   // Project methods
-  async getProjects(userId: string): Promise<Project[]> {
+  async getProjectsByOwner(userId: string): Promise<Project[]> {
     return Array.from(this.projects.values()).filter(project => 
       project.ownerId === userId || 
       Array.from(this.projectMembers.values()).some(member => 
